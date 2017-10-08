@@ -128,16 +128,15 @@ class Model(object):
 
             with tf.name_scope('cosine_similarity'):
                 # Cosine similarity
-                query_norm = tf.sqrt(tf.reduce_sum(tf.square(self.query_l2_out), 1, True))
-                doc_norm = tf.sqrt(tf.reduce_sum(tf.square(self.doc_l2_out), 1, True))
-
+                # query_norm = tf.sqrt(tf.reduce_sum(tf.square(self.query_l2_out), 1, True))
+                # doc_norm = tf.sqrt(tf.reduce_sum(tf.square(self.doc_l2_out), 1, True))
+                #
+                # prod = tf.reduce_sum(tf.multiply(self.query_l2_out, self.doc_l2_out), 1, True)
+                # norm_prod = tf.multiply(query_norm, doc_norm) + 0.01
+                # cos_sim = tf.truediv(prod, norm_prod)
                 prod = tf.reduce_sum(tf.multiply(self.query_l2_out, self.doc_l2_out), 1, True)
-                norm_prod = tf.multiply(query_norm, doc_norm)
-
-                cos_sim = tf.truediv(prod, norm_prod)
-                prob = cos_sim
-                unprob = tf.abs(1 - prob)
-                self.out = tf.concat([unprob, prob], axis=1)
+                unprod = tf.abs(1 - prod)
+                self.out = tf.concat([unprod, prod], axis=1)
 
             with tf.name_scope('loss'):
                 self.pred_y = tf.argmax(tf.nn.softmax(self.out), 1)
