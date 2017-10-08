@@ -69,7 +69,7 @@ def generate_dataset(stcA, stcB, n_neg=10, former_rate=0.8, latter_rate = 0.9):
         label.append([0,1])
         for _ in range(n_neg):
             idx = random.randint(0, l-1)
-            query_data.append(doc[idx])
+            query_data.append(query[i])
             doc_data.append(doc[idx])
             label.append([1,0])
 
