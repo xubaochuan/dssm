@@ -32,16 +32,14 @@ def load_dataset(query_path, doc_path, label_path):
     return query_data, doc_data, label_data
 
 def get_onehot_vec(filepath, sentence_length=20):
-    vocab = load_vocab()
+    global vocab
     data_set = []
     fr = open(filepath)
     for row in fr.readlines():
         temp = []
-        try:
-            row = row.strip().decode('utf8')
-        except:
-            continue
-        if row == '':
+        row = row.strip().split()
+        if len(row) == 0:
+            print "sentence has no word"
             continue
         for word in row:
             if word in vocab:
@@ -74,7 +72,7 @@ def load_vocab():
     fr = open(vocab_path)
     index = 0
     for row in fr.readlines():
-        word = row.strip().decode('utf8')
+        word = row.strip()
         if word == '':
             continue
         vocab[word] = index
@@ -82,6 +80,8 @@ def load_vocab():
     fr.close()
     return vocab
     fw.close()
+
+vocab = load_vocab()
 
 if __name__=="__main__":
     load_vocab()

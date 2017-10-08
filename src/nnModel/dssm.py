@@ -16,7 +16,7 @@ flags.DEFINE_integer('sentence_length', 20, 'sentence max word')
 flags.DEFINE_boolean('use_gpu', False, 'use gpu or not')
 flags.DEFINE_string('model_version', 'v1', 'model version')
 flags.DEFINE_boolean('fine_tune', False, 'enable word embedding fine tune')
-flags.DEFINE_integer('vocab_size', 2328, 'the size of the vocab')
+flags.DEFINE_integer('vocab_size', 2327, 'the size of the vocab')
 
 class Model(object):
 
@@ -48,7 +48,7 @@ class Model(object):
                 if FLAGS.fine_tune:
                     self.words = tf.Variable(self.__load_w2v('../../model/vec.txt', FLAGS.embedding_dim), dtype=tf.float32, name='words')
                 else:
-                    self.words = tf.Variable(tf.random_normal([FLAGS.vocab_size, FLAGS.embedding_dim]), dtype=tf.float32, name='words')
+                    self.words = tf.Variable(tf.random_uniform([FLAGS.vocab_size, FLAGS.embedding_dim]), dtype=tf.float32, name='words')
 
                 self.query_words = tf.nn.embedding_lookup(self.words, self.query)
                 self.doc_words = tf.nn.embedding_lookup(self.words, self.doc)
@@ -108,23 +108,36 @@ class Model(object):
                 self.query_l2_out = tf.nn.l2_normalize(tf.nn.relu(self.query_l2), 1)
                 self.doc_l2_out = tf.nn.l2_normalize(tf.nn.relu(self.doc_l2), 1)
 
-            with tf.name_scope('merge_query_doc'):
-                self.pairwise = tf.concat([self.query_l2_out, self.doc_l2_out], axis=1)
+            # with tf.name_scope('merge_query_doc'):
+            #     self.pairwise = tf.concat([self.query_l2_out, self.doc_l2_out], axis=1)
+            #
+            # with tf.name_scope('hidden_layer'):
+            #     self.hl1_par_range = np.sqrt(6.0 / (self.L2_N * 2 + self.L3_N))
+            #     self.wh1 = tf.Variable(tf.random_uniform([self.L2_N * 2, self.L3_N], -self.hl1_par_range, self.hl1_par_range), 'wh1')
+            #     self.bh1 = tf.Variable(tf.random_uniform([self.L3_N], -self.hl1_par_range, self.hl1_par_range), 'bh1')
+            #
+            #     self.hl = tf.matmul(self.pairwise, self.wh1) + self.bh1
+            #     self.hl_out = tf.nn.l2_normalize(tf.nn.relu(self.hl), 1)
+            #
+            # with tf.name_scope('mlp_out'):
+            #     self.out_par_range = np.sqrt(6.0 / (self.L3_N + self.OUT_N))
+            #     self.wo1 = tf.Variable(tf.random_uniform([self.L3_N, self.OUT_N], -self.out_par_range, self.out_par_range), 'wo1')
+            #     self.bo1 = tf.Variable(tf.random_uniform([self.OUT_N], -self.out_par_range, self.out_par_range), 'bo1')
+            #
+            #     self.out = tf.matmul(self.hl_out, self.wo1) + self.bo1
 
-            with tf.name_scope('hidden_layer'):
-                self.hl1_par_range = np.sqrt(6.0 / (self.L2_N * 2 + self.L3_N))
-                self.wh1 = tf.Variable(tf.random_uniform([self.L2_N * 2, self.L3_N], -self.hl1_par_range, self.hl1_par_range), 'wh1')
-                self.bh1 = tf.Variable(tf.random_uniform([self.L3_N], -self.hl1_par_range, self.hl1_par_range), 'bh1')
+            with tf.name_scope('cosine_similarity'):
+                # Cosine similarity
+                query_norm = tf.sqrt(tf.reduce_sum(tf.square(self.query_l2_out), 1, True))
+                doc_norm = tf.sqrt(tf.reduce_sum(tf.square(self.doc_l2_out), 1, True))
 
-                self.hl = tf.matmul(self.pairwise, self.wh1) + self.bh1
-                self.hl_out = tf.nn.l2_normalize(tf.nn.relu(self.hl), 1)
+                prod = tf.reduce_sum(tf.multiply(self.query_l2_out, self.doc_l2_out), 1, True)
+                norm_prod = tf.multiply(query_norm, doc_norm)
 
-            with tf.name_scope('mlp_out'):
-                self.out_par_range = np.sqrt(6.0 / (self.L3_N + self.OUT_N))
-                self.wo1 = tf.Variable(tf.random_uniform([self.L3_N, self.OUT_N], -self.out_par_range, self.out_par_range), 'wo1')
-                self.bo1 = tf.Variable(tf.random_uniform([self.OUT_N], -self.out_par_range, self.out_par_range), 'bo1')
-
-                self.out = tf.matmul(self.hl_out, self.wo1) + self.bo1
+                cos_sim = tf.truediv(prod, norm_prod)
+                prob = cos_sim
+                unprob = tf.abs(1 - prob)
+                self.out = tf.concat([unprob, prob], axis=1)
 
             with tf.name_scope('loss'):
                 self.pred_y = tf.argmax(tf.nn.softmax(self.out), 1)
@@ -152,8 +165,8 @@ class Model(object):
         assert (dim == expectDim)
         ws = []
         for t in range(total):
-            line = fp.readline().strip()
-            ss = line.split(" ")
+            line = fp.readline().rstrip()
+            ss = line.split(" ")[1:]
             assert (len(ss) == dim)
             vals = []
             for i in range(0, dim):
@@ -161,6 +174,8 @@ class Model(object):
                 vals.append(fv)
             ws.append(vals)
         fp.close()
+        assert total == len(ws)
+        print "w2v size : " + str(total)
         return np.asarray(ws, dtype=np.float32)
 
     def __conv2d(self, name, input, w, b):

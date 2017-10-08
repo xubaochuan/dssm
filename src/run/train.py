@@ -55,7 +55,7 @@ def train():
     dssmModel = dssm.Model()
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
-    config.log_device_placement = True
+    config.log_device_placement = False
     config.allow_soft_placement = True
 
     with tf.Session(config=config) as sess:

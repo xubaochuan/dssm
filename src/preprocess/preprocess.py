@@ -14,7 +14,7 @@ test_label_path = '../../dataset/test_label.txt'
 def replaceTag(s):
     s = s.replace(',', '')
     s = s.replace('.', '')
-    return s
+    return s.lower()
 
 def getDataPairs(filepath):
     fr = open(filepath)
@@ -37,18 +37,47 @@ def getDataPairs(filepath):
     assert len(stcA) == len(stcB)
     return stcA, stcB
 
-def generate_vocab(stcA, stcB):
+def generate_vocab_small(stcA, stcB):
     all_stc = stcA + stcB
     vocab_set = set()
     for stc in all_stc:
-        stc = stc.lower()
         arr = stc.strip().split(' ')
         for v in arr:
             if v not in vocab_set:
                 vocab_set.add(v)
     fw = open('../../model/vocab.txt', 'w')
+    print "vocab size: " + str(len(vocab_set))
     for v in vocab_set:
         fw.write(v + '\n')
+    fw.close()
+
+def generate_vocab():
+    fr = open('../../model/vec.txt')
+    vocab = {}
+    first_line = fr.readline()
+    f_arr = first_line.strip().split(' ')
+    size = int(f_arr[0])
+    dim = int(f_arr[1])
+    index = 0
+    fw = open('../../model/vocab.txt', 'w')
+    for line in fr.readlines():
+        arr = line.rstrip().split(' ')
+        if len(arr) != dim+1:
+            print index,arr
+            break
+        vocab[arr[0]] = index
+        index += 1
+        fw.write(arr[0] + '\n')
+    assert size == len(vocab)
+    print "vocab size: " + str(size)
+    fr.close()
+    fw.close()
+
+def generate_w2v(stcA, stcB):
+    all_stc = stcA + stcB
+    fw = open('../../raw_data/w2v_corpus.txt', 'w')
+    for stc in all_stc:
+        fw.write(stc + '\n')
     fw.close()
 
 def generate_dataset(stcA, stcB, n_neg=10, former_rate=0.8, latter_rate = 0.9):
@@ -115,8 +144,9 @@ def write_file(content, filepath, label=False):
 def main():
     filepath = '../../raw_data/SICK.txt'
     stcA, stcB = getDataPairs(filepath)
-    generate_vocab(stcA, stcB)
-    generate_dataset(stcA, stcB)
+    generate_w2v(stcA, stcB)
+    generate_vocab_small(stcA, stcB)
+    generate_dataset(stcA, stcB, n_neg=10)
 
 if __name__=='__main__':
     main()

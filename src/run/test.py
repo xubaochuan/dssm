@@ -1,12 +1,14 @@
 #coding=utf-8
 import tensorflow as tf
+import sys
 
-from src.dataProvider import data_provider
-from src.nnModel import dssm
+sys.path.append("..")
+from dataProvider import data_provider
+from nnModel import dssm
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
-flags.DEFINE_string('model_path', '../model/dssm.ckpt', 'model path')
+flags.DEFINE_string('model_path', '../../model/dssm.ckpt', 'model path')
 
 def biclass_rate(self, label, pred):
     tp = 0.0
@@ -32,10 +34,11 @@ def biclass_rate(self, label, pred):
     return p_precision, p_recall, n_precision, n_recall
 
 def predict(query_path, doc_path):
-    query_data, doc_data = data_provider.load_dataset(query_path, doc_path)
+    query_data, doc_data, label_data = data_provider.load_dataset(query_path, doc_path, label_path)
     dssmModel = dssm.Model()
     with tf.Session() as sess:
-        dssmModel.load_model(sess, FLAGS.model_path)
+        saver = tf.train.Saver()
+        dssmModel.load_model(saver, sess, FLAGS.model_path)
         pred_= sess.run([dssmModel.pred_y], feed_dict={dssmModel.query: query_data, dssmModel.doc: doc_data})
         return pred_
 
@@ -92,10 +95,10 @@ def load_label_data(filepath):
     return label
 
 if __name__=='__main__':
-    query_path = '../dataset/test_query.txt'
-    doc_path = '../dataset/test_doc.txt'
-    label_path = '../dataset/test_label.txt'
+    query_path = '../../dataset/test_query.txt'
+    doc_path = '../../dataset/test_doc.txt'
+    label_path = '../../dataset/test_label.txt'
     pred = predict(query_path, doc_path)
     label = load_label_data(label_path)
-    write_result(query_path, doc_path, pred, '../output/test1.txt')
-    write_diff(query_path, doc_path, pred, label, '../output/diff1.txt')
+    write_result(query_path, doc_path, pred, '../../output/test1.txt')
+    write_diff(query_path, doc_path, pred, label, '../../output/diff1.txt')
