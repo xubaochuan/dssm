@@ -30,7 +30,7 @@ def getDataPairs(filepath):
         arr = line.strip().split('\t')
         if len(arr) != 12:
             continue
-        if float(arr[4]) < 2: #去掉关联低的文本对
+        if float(arr[4]) < 3: #去掉关联低的文本对
             continue
         stcA.append(replaceTag(arr[1]))
         stcB.append(replaceTag(arr[2]))
@@ -146,7 +146,7 @@ def main():
     stcA, stcB = getDataPairs(filepath)
     generate_w2v(stcA, stcB)
     generate_vocab_small(stcA, stcB)
-    generate_dataset(stcA, stcB, n_neg=10)
+    generate_dataset(stcA, stcB, n_neg=2)
 
 if __name__=='__main__':
     main()

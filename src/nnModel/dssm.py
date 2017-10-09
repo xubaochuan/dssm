@@ -16,7 +16,7 @@ flags.DEFINE_integer('sentence_length', 20, 'sentence max word')
 flags.DEFINE_boolean('use_gpu', False, 'use gpu or not')
 flags.DEFINE_string('model_version', 'v1', 'model version')
 flags.DEFINE_boolean('fine_tune', False, 'enable word embedding fine tune')
-flags.DEFINE_integer('vocab_size', 2327, 'the size of the vocab')
+flags.DEFINE_integer('vocab_size', 2278, 'the size of the vocab')
 
 class Model(object):
 

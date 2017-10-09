@@ -50,7 +50,7 @@ def get_train_batch_data(step, BS):
     return train_query[start:end, :], train_doc[start:end, :], train_label[start:end, :]
 
 def train():
-    BS = (10+1)*200
+    BS = (2+1)*200
 
     dssmModel = dssm.Model()
     config = tf.ConfigProto()
